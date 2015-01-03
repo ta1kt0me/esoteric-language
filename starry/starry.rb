@@ -14,54 +14,62 @@ class Starry
   end
 
   def run
+    pc = 0
+    while pc < @insns.size
+      insn, arg = *@insns[pc]
+      case
 
+      else
+      raise ProgramError, "知らない命令です#{insn}"
+      end
+      pc += 1
+    end
   end
 
   private
+
+  OP_CAL   = [:add, :sub, :mul, :div, :mod]
+  OP_IN    = [:num_in, :char_in]
+  OP_OUT   = [:num_out, :char_out]
+  OP_STACK = [:__dummy__, :dup, :swap, :rotate, :pop]
+
   def parse(src)
-    str = src
     insns = []
-
-    while str.size != 0
-      parts = str.partition(/^ *[\*\+\,\.\'\`]/)
-      p parts[1]
-      raise ProgramError, "starryで使用可能な文字は「 *+,.'`」のみです" if parts[1].size == 0
-      space_size = parts[1].scan(/ /).size
-
-      if parts[1].index(/\*/)
-        case space_size % 5
-        when 0 then insns << [:add]
-        when 1 then insns << [:sub]
-        when 2 then insns << [:mul]
-        when 3 then insns << [:div]
-        when 4 then insns << [:mod]
+    spaces = 0
+    src.each_char do |c|
+      case c
+      when " "
+        spaces += 1
+      when "*"
+        insns << select(OP_CAL, spaces)
+        spaces = 0
+      when "."
+        insns << select(OP_OUT, spaces)
+        spaces = 0
+      when ","
+        insns << select(OP_IN, spaces)
+        spaces = 0
+      when "+"
+        raise ProgramError, '存在しない操作です' if spaces == 0
+        if spaces < OP_STACK.size
+          insns << select(OP_STACK, spaces)
+        else
+          insns << [:push, spaces - OP_STACK.size]
         end
-      elsif parts[1].index(/\+/)
-        case space_size
-        when 1 then insns << [:dup]
-        when 2 then insns << [:swap]
-        when 3 then insns << [:rotate]
-        when 4 then insns << [:pop]
-        when 5..Float::INFINITY then insns << [:push, space_size - 5]
-        end
-      elsif parts[1].index(/\,/)
-        case
-        when 0 then insns << [:num_in]
-        when 1 then insns << [:char_in]
-        end
-      elsif parts[1].index(/\./)
-        case
-        when 0 then insns << [:num_out]
-        when 1 then insns << [:char_out]
-        end
-      elsif parts[1].index(/\`/)
-        insns << [:label, space_size]
-      elsif parts[1].index(/\'/)
-        insns << [:jump_to, space_size]
+        spaces = 0
+      when "`"
+        insns << [:label, spaces]
+        spaces = 0
+      when "'"
+        insns << [:jump, spaces]
+        spaces = 0
       end
-      str = parts[2]
     end
     insns
+  end
+
+  def select(op, spaces)
+    [op[spaces % op.size]]
   end
 
   def find_labels(insns)
@@ -73,6 +81,17 @@ class Starry
       end
     end
     labels
+  end
+
+  def push(item)
+    raise ProgramError, "整数以外(#{item})をpushしようとしました" unless item.is_a?(Integer)
+    @stack.push(item)
+  end
+
+  def pop
+    item = @stack.pop
+    raise ProgramError, "空のスタックをポップしようとしました" if item.nil?
+    item
   end
 end
 
