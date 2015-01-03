@@ -17,8 +17,51 @@ class Starry
     pc = 0
     while pc < @insns.size
       insn, arg = *@insns[pc]
-      case
-      when ''
+      case insn
+      when :add
+        y, x = pop, pop
+        push(x + y)
+      when :sub
+        y, x = pop, pop
+        push(x - y)
+      when :mul
+        y, x = pop, pop
+        push(x * y)
+      when :div
+        y, x = pop, pop
+        push(x / y)
+      when :mod
+        y, x = pop, pop
+        push(x % y)
+      when :num_in
+        push($stdin.gets.to_i)
+      when :char_in
+        push($stdin.getc.ord)
+      when :num_out
+        print pop
+      when :char_out
+        print pop.chr
+      when :dup
+        push(@stack[-1])
+      when :swap
+        x, y = pop, pop
+        push x
+        push y
+      when :rotate
+        x, y, z = pop, pop, pop
+        push x
+        push z
+        push y
+      when :pop
+        pop
+      when :push
+        push arg
+      when :label
+      when :jump
+        if pop != 0
+          pc = @labels[arg]
+          raise ProgramError, "ジャンプ先#{arg.inspect}が見つかりません" if pc.nil?
+        end
       else
       raise ProgramError, "知らない命令です#{insn}"
       end
