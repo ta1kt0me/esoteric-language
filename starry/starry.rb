@@ -18,7 +18,7 @@ class Starry
     while pc < @insns.size
       insn, arg = *@insns[pc]
       case
-
+      when ''
       else
       raise ProgramError, "知らない命令です#{insn}"
       end
