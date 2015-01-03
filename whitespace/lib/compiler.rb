@@ -34,6 +34,7 @@ module Whitespace
     end
 
     def step
+      puts @s.to_s
       case
       when @s.scan(/  #{NUM}/)    then [:push,  num(@s[1])]
       when @s.scan(/ \n /)        then [:dup]
